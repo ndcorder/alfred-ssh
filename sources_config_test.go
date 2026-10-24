@@ -75,6 +75,47 @@ func TestConfigIncludeCycle(t *testing.T) {
 	}
 }
 
+// Mutually-including files must not blow up exponentially: the Script
+// Filter re-parses configs on every keystroke.
+func TestConfigIncludeMutualCycleIsParsedOnce(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "config"), "Include conf.d/* conf.d/*\n")
+	for _, n := range []string{"a", "b", "c"} {
+		writeFile(t, filepath.Join(dir, "conf.d", n), "Include conf.d/*\nHost "+n+"\n")
+	}
+
+	got := hostNames(parseConfigFile(filepath.Join(dir, "config")))
+	if len(got) != 3 {
+		t.Fatalf("hosts = %v, want each of a, b, c once", got)
+	}
+}
+
+func TestConfigIncludeQuotedPathWithSpaces(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "config"), `Include "my confs/x.conf" other`+"\n")
+	writeFile(t, filepath.Join(dir, "my confs/x.conf"), "Host spaced\n")
+	writeFile(t, filepath.Join(dir, "other"), "Host plain\n")
+
+	got := hostNames(parseConfigFile(filepath.Join(dir, "config")))
+	if len(got) != 2 || got[0] != "plain" || got[1] != "spaced" {
+		t.Fatalf("hosts = %v, want [plain spaced]", got)
+	}
+}
+
+// Like OpenSSH's glob(3), "*" must not match dotfiles such as editor swap files.
+func TestConfigIncludeGlobSkipsDotfiles(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "config"), "Include conf.d/* conf.d/.explicit\n")
+	writeFile(t, filepath.Join(dir, "conf.d/live"), "Host live\n")
+	writeFile(t, filepath.Join(dir, "conf.d/.live.swp"), "Host stale\n")
+	writeFile(t, filepath.Join(dir, "conf.d/.explicit"), "Host explicit\n")
+
+	got := hostNames(parseConfigFile(filepath.Join(dir, "config")))
+	if len(got) != 2 || got[0] != "explicit" || got[1] != "live" {
+		t.Fatalf("hosts = %v, want [explicit live]", got)
+	}
+}
+
 func TestConfigIncludeMissingFileIsIgnored(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config")

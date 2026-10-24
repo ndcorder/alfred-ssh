@@ -109,10 +109,20 @@ const maxIncludeDepth = 16
 func parseConfigFile(path string) []*ConfigHost {
 	// OpenSSH resolves relative Include paths against ~/.ssh for the user
 	// config and /etc/ssh for the system config, i.e. the top-level file's dir.
-	return parseConfigFileDepth(path, filepath.Dir(path), 0)
+	return parseConfigFileDepth(path, filepath.Dir(path), 0, map[string]bool{})
 }
 
-func parseConfigFileDepth(path, baseDir string, depth int) []*ConfigHost {
+// seen holds files already parsed, so each file's hosts are listed once and
+// Include cycles (or several globs matching the same files) stay linear.
+func parseConfigFileDepth(path, baseDir string, depth int, seen map[string]bool) []*ConfigHost {
+	if abs, err := filepath.Abs(path); err == nil {
+		path = abs
+	}
+	if seen[path] {
+		return nil
+	}
+	seen[path] = true
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("[config/%s] Error opening file: %s", path, err)
@@ -126,7 +136,7 @@ func parseConfigFileDepth(path, baseDir string, depth int) []*ConfigHost {
 	}
 	for _, pattern := range includes {
 		for _, p := range expandInclude(pattern, baseDir) {
-			hosts = append(hosts, parseConfigFileDepth(p, baseDir, depth+1)...)
+			hosts = append(hosts, parseConfigFileDepth(p, baseDir, depth+1, seen)...)
 		}
 	}
 	return hosts
@@ -138,19 +148,48 @@ func splitIncludes(config string) (string, []string) {
 	var includes []string
 	lines := strings.Split(config, "\n")
 	for i, line := range lines {
-		// Keyword and arguments are separated by whitespace or "=".
-		fields := strings.FieldsFunc(line, func(r rune) bool {
-			return r == ' ' || r == '\t' || r == '='
-		})
-		if len(fields) < 2 || !strings.EqualFold(fields[0], "include") {
+		// Keyword and arguments are separated by whitespace and/or one "=".
+		line = strings.TrimSpace(line)
+		end := strings.IndexAny(line, " \t=")
+		if end < 0 || !strings.EqualFold(line[:end], "include") {
 			continue
 		}
-		for _, f := range fields[1:] {
-			includes = append(includes, strings.Trim(f, `"`))
-		}
+		rest := strings.TrimLeft(line[end:], " \t")
+		rest = strings.TrimPrefix(rest, "=")
+		includes = append(includes, splitArgs(rest)...)
 		lines[i] = ""
 	}
 	return strings.Join(lines, "\n"), includes
+}
+
+// splitArgs splits on whitespace, keeping "double quoted" arguments whole.
+func splitArgs(s string) []string {
+	var (
+		args    []string
+		current strings.Builder
+		quoted  bool
+		inArg   bool
+	)
+	for _, r := range s {
+		switch {
+		case r == '"':
+			quoted = !quoted
+			inArg = true
+		case (r == ' ' || r == '\t') && !quoted:
+			if inArg {
+				args = append(args, current.String())
+				current.Reset()
+				inArg = false
+			}
+		default:
+			current.WriteRune(r)
+			inArg = true
+		}
+	}
+	if inArg {
+		args = append(args, current.String())
+	}
+	return args
 }
 
 // expandInclude resolves an Include argument to the files it matches.
@@ -165,7 +204,30 @@ func expandInclude(pattern, baseDir string) []string {
 	if err != nil {
 		log.Printf("[config] Bad Include pattern %q: %s", pattern, err)
 	}
-	return matches
+	var files []string
+	for _, m := range matches {
+		if !hiddenByGlob(pattern, m) {
+			files = append(files, m)
+		}
+	}
+	return files
+}
+
+// hiddenByGlob reports whether match has a dot-file component that pattern
+// did not spell out with a leading ".". glob(3), which OpenSSH uses, never
+// lets a wildcard match a leading dot; filepath.Glob does.
+func hiddenByGlob(pattern, match string) bool {
+	pp := strings.Split(filepath.Clean(pattern), string(filepath.Separator))
+	mp := strings.Split(filepath.Clean(match), string(filepath.Separator))
+	if len(pp) != len(mp) {
+		return false
+	}
+	for i := range mp {
+		if strings.HasPrefix(mp[i], ".") && !strings.HasPrefix(pp[i], ".") {
+			return true
+		}
+	}
+	return false
 }
 
 // parseConfig parses the hosts in an SSH config (without Include lines).
