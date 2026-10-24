@@ -1,7 +1,9 @@
 Secure SHell for Alfred
 =======================
 
-Open SSH/SFTP/mosh connections from [Alfred 3][alfredapp] with autosuggestions based on SSH config files, `/etc/hosts` and your history.
+Open SSH/SFTP/mosh connections from [Alfred][alfredapp] with autosuggestions based on SSH config files, `/etc/hosts` and your history.
+
+> **This is a maintained fork** of [deanishe/alfred-ssh][upstream] by Dean Jackson, which has had no release since v0.8.0 (2018). It ships a universal (Apple silicon + Intel) binary, so it keeps working after Rosetta goes away, and reads hosts from `Include`d config files. All credit for the workflow itself goes to Dean.
 
 ![demo](assets/demo.gif)
 
@@ -32,7 +34,7 @@ Features
     - Open **SFTP** connection
     - **Ping** host
 - Sources (can be managed individually):
-    - `~/.ssh/config`
+    - `~/.ssh/config` (including files pulled in with `Include`)
     - `~/.ssh/known_hosts`
     - History (i.e. username + host addresses previously entered by the user)
     - `/etc/hosts`
@@ -44,6 +46,16 @@ Installation
 ------------
 
 Download [the latest release][gh-releases] and double-click the file to install in Alfred.
+
+The `assh` helper is not notarised, so macOS may block it the first time it runs. If it does, open **System Settings → Privacy & Security** and click **Open Anyway** for `assh`.
+
+**Coming from the original workflow?** This fork has its own bundle ID (`com.ndcorder.alfred-ssh`), so both can be installed; disable or delete the original to free the `ssh` keyword. To keep your history, copy it across:
+
+```sh
+d=~/Library/Application\ Support/Alfred/Workflow\ Data
+mkdir -p "$d/com.ndcorder.alfred-ssh"
+cp "$d/net.deanishe.alfred-ssh/history.json" "$d/com.ndcorder.alfred-ssh/"
+```
 
 
 <a id="usage"></a>
@@ -137,7 +149,7 @@ If you'd prefer to use iTerm2 rather than Terminal.app, there are two steps:
 Licensing & thanks
 ------------------
 
-This workflow is released under the [MIT Licence][mit].
+This workflow is released under the [MIT Licence][mit]. It was written by Dean Jackson ([deanishe/alfred-ssh][upstream]); this fork is maintained by Nicolas Corder.
 
 It uses the following libraries (all [MIT Licence][mit]):
 
@@ -158,8 +170,12 @@ If you need Alfred 2 support, check out [@isometry's workflow][ssh-breathe].
 Changelog
 ---------
 
-- **v0.9.0**
-    - 
+- **v0.9.0** (first release of this fork)
+    - Universal binary: runs natively on Apple silicon and Intel, no Rosetta needed
+    - Follow `Include` directives in SSH config files (deanishe/alfred-ssh#11)
+    - Fresh build with a current Go toolchain; users in deanishe/alfred-ssh#72 report this stops macOS (Ventura and later) killing the helper
+    - Updates, issues and docs point to this fork; new bundle ID `com.ndcorder.alfred-ssh`
+    - Build with mage instead of shell scripts (upstream, unreleased)
 - **v0.8.0 — 2018-03-17**
     - Add option to use `ssh` command instead of URL.
         Enables loading of local shell configuration before opening connection. #8
@@ -189,7 +205,8 @@ Changelog
 [awgo]: https://godoc.org/github.com/deanishe/awgo
 [confsheet]: https://www.alfredapp.com/help/workflows/advanced/variables/#environment
 [demo]: https://raw.githubusercontent.com/deanishe/alfred-ssh/master/demo.gif "The workflow in action"
-[gh-releases]: https://github.com/deanishe/alfred-ssh/releases/latest
+[gh-releases]: https://github.com/ndcorder/alfred-ssh/releases/latest
+[upstream]: https://github.com/deanishe/alfred-ssh
 [isometry]: https://github.com/isometry
 [iterm-plugin]: https://github.com/stuartcryan/custom-iterm-applescripts-for-alfred/
 [iterm-screenshot]: https://raw.githubusercontent.com/deanishe/alfred-ssh/master/iTerm2.png "Setting a handler in iTerm2 Preferences"
