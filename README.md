@@ -3,7 +3,7 @@ Secure SHell for Alfred
 
 Open SSH/SFTP/mosh connections from [Alfred][alfredapp] with autosuggestions based on SSH config files, `/etc/hosts` and your history.
 
-> **This is a maintained fork** of [deanishe/alfred-ssh][upstream] by Dean Jackson, which has had no release since v0.8.0 (2018). It ships a universal (Apple silicon + Intel) binary, so it keeps working after Rosetta goes away, and reads hosts from `Include`d config files. All credit for the workflow itself goes to Dean.
+> This is a maintained fork of [deanishe/alfred-ssh][upstream] by Dean Jackson, which has had no release since v0.8.0 (2018). It ships a universal (Apple silicon + Intel) binary, so it keeps working after Rosetta goes away, and reads hosts from `Include`d config files. All credit for the workflow itself goes to Dean.
 
 ![demo](assets/demo.gif)
 
@@ -47,9 +47,9 @@ Installation
 
 Download [the latest release][gh-releases] and double-click the file to install in Alfred.
 
-The `assh` helper is not notarised, so macOS may block it the first time it runs. If it does, open **System Settings → Privacy & Security** and click **Open Anyway** for `assh`.
+The `assh` helper is not notarised, so macOS may block it the first time it runs. If it does, open System Settings, then Privacy & Security, and click Open Anyway for `assh`.
 
-**Coming from the original workflow?** This fork has its own bundle ID (`com.ndcorder.alfred-ssh`), so both can be installed; disable or delete the original to free the `ssh` keyword. To keep your history, copy it across:
+If you are coming from the original workflow: this fork has its own bundle ID (`com.ndcorder.alfred-ssh`), so both can be installed; disable or delete the original to free the `ssh` keyword. To keep your history, copy it across:
 
 ```sh
 d=~/Library/Application\ Support/Alfred/Workflow\ Data
