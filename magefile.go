@@ -1,6 +1,7 @@
 // Copyright (c) 2019 Dean Jackson <deanishe@deanishe.net>
 // MIT Licence applies http://opensource.org/licenses/MIT
 
+//go:build mage
 // +build mage
 
 package main
@@ -284,7 +285,7 @@ func Link() error {
 	mg.Deps(Build)
 
 	fmt.Println("linking ./build to workflow directory ...")
-	target := filepath.Join(WorkflowDir, BundleID)
+	target := filepath.Join(workflowDir(), BundleID)
 	// fmt.Printf("target: %s\n", target)
 
 	if exists(target) {
