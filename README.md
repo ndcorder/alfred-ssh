@@ -79,7 +79,7 @@ Configuration is managed with `sshconf`:
     - `An Update is Available!` or `Workflow is Up to Date` — Action to check for an update and install if one is available.
     - `Source: XYZ` — Toggle source on/off
     - `Log File` — Open workflow's log file in the default app (usually Console.app)
-    - `Documentation` / `Report Issue` / `Visit Forum` — Open this file, the workflow's issue tracker or forum thread in your browser.
+    - `Documentation` / `Report Issue` — Open this file or the workflow's issue tracker in your browser.
 
 
 <a id="configuration"></a>
