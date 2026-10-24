@@ -31,11 +31,11 @@ import (
 
 	"os/exec"
 
-	ssh "github.com/deanishe/alfred-ssh"
 	aw "github.com/deanishe/awgo"
 	"github.com/deanishe/awgo/fuzzy"
 	"github.com/deanishe/awgo/update"
 	"github.com/deanishe/awgo/util"
+	ssh "github.com/ndcorder/alfred-ssh"
 
 	docopt "github.com/docopt/docopt-go"
 )
@@ -44,10 +44,9 @@ const (
 	// Name of background job that checks for updates
 	updateJobName = "checkForUpdate"
 	// GitHub repo
-	repo = "deanishe/alfred-ssh"
+	repo = "ndcorder/alfred-ssh"
 	// Doc & help URLs
-	issueURL = "https://github.com/deanishe/alfred-ssh/issues"
-	forumURL = "https://www.alfredforum.com/topic/8956-secure-shell-for-alfred-3-ssh-plus-sftp-mosh-ping-with-autosuggest/"
+	issueURL = "https://github.com/ndcorder/alfred-ssh/issues"
 	helpPath = "./README.html"
 )
 
@@ -79,7 +78,6 @@ var (
 	IconOn              = &aw.Icon{Value: "icons/on.png"}
 	IconReload          = &aw.Icon{Value: "icons/reload.png"}
 	IconSettings        = &aw.Icon{Value: "icons/settings.png"}
-	IconURL             = &aw.Icon{Value: "icons/url.png"}
 	IconUpdateAvailable = &aw.Icon{Value: "icons/update-available.png"}
 	IconUpdateOK        = &aw.Icon{Value: "icons/update-ok.png"}
 	IconWarning         = &aw.Icon{Value: "icons/warning.png"}
@@ -125,7 +123,6 @@ func init() {
 		),
 		aw.AddMagic(
 			openMagic{"docs", "Open workflow documentation in your browser", helpPath},
-			openMagic{"forum", "Visit the workflow thread on alfredforum.com", forumURL},
 		),
 		update.GitHub(repo),
 		aw.HelpURL(issueURL),
@@ -415,11 +412,6 @@ func runConfig(opts *options) {
 		Subtitle("Open the workflow's issue tracker on GitHub").
 		Autocomplete("workflow:help").
 		Icon(IconIssue)
-
-	wf.NewItem("Visit Forum").
-		Subtitle("Open the workflow's thread on alfredforum.com").
-		Autocomplete("workflow:forum").
-		Icon(IconURL)
 
 	if opts.query != "" {
 		wf.Filter(opts.query)

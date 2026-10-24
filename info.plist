@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>net.deanishe.alfred-ssh</string>
+	<string>com.ndcorder.alfred-ssh</string>
 	<key>category</key>
 	<string>Internet</string>
 	<key>connections</key>
@@ -224,7 +224,7 @@
 		</array>
 	</dict>
 	<key>createdby</key>
-	<string>Dean Jackson</string>
+	<string>Dean Jackson, Nicolas Corder</string>
 	<key>description</key>
 	<string>Open SSH connections</string>
 	<key>disabled</key>
@@ -933,6 +933,6 @@ Disabled by default. Set EXTERNAL_TRIGGER=1 in the Configuration Sheet to enable
 	<key>version</key>
 	<string>0.9.0</string>
 	<key>webaddress</key>
-	<string>https://github.com/deanishe/alfred-ssh</string>
+	<string>https://github.com/ndcorder/alfred-ssh</string>
 </dict>
 </plist>

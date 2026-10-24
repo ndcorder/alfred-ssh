@@ -1,9 +1,10 @@
-Secure SHell for Alfred. Open SSH connections from Alfred 3.
+Secure SHell for Alfred. Open SSH connections from Alfred.
 
 The MIT License (MIT)
 ---------------------
 
 Copyright (c) 2016 Dean Jackson <deanishe@deanishe.net>
+Copyright (c) 2026 Nicolas Corder <ndcorder@pm.me>
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the

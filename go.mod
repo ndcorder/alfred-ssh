@@ -1,4 +1,4 @@
-module github.com/deanishe/alfred-ssh
+module github.com/ndcorder/alfred-ssh
 
 require (
 	github.com/bmatcuk/doublestar v1.1.2
