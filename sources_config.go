@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -101,15 +102,76 @@ func (s *ConfigSource) Hosts() []Host {
 	return s.hosts
 }
 
-// parseConfigFile parse an SSH config file.
+// maxIncludeDepth is OpenSSH's limit on nested Include directives.
+const maxIncludeDepth = 16
+
+// parseConfigFile parse an SSH config file, following Include directives.
 func parseConfigFile(path string) []*ConfigHost {
-	var hosts []*ConfigHost
-	r, err := os.Open(path)
+	// OpenSSH resolves relative Include paths against ~/.ssh for the user
+	// config and /etc/ssh for the system config, i.e. the top-level file's dir.
+	return parseConfigFileDepth(path, filepath.Dir(path), 0)
+}
+
+func parseConfigFileDepth(path, baseDir string, depth int) []*ConfigHost {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("[config/%s] Error opening file: %s", path, err)
+		return nil
+	}
+	body, includes := splitIncludes(string(data))
+	hosts := parseConfig(path, body)
+	if len(includes) > 0 && depth >= maxIncludeDepth {
+		log.Printf("[config/%s] Include nested too deeply, ignoring", path)
 		return hosts
 	}
-	cfg, err := ssh_config.Parse(r)
+	for _, pattern := range includes {
+		for _, p := range expandInclude(pattern, baseDir) {
+			hosts = append(hosts, parseConfigFileDepth(p, baseDir, depth+1)...)
+		}
+	}
+	return hosts
+}
+
+// splitIncludes removes Include directives from an SSH config, returning
+// the remaining config and the Include arguments (paths or glob patterns).
+func splitIncludes(config string) (string, []string) {
+	var includes []string
+	lines := strings.Split(config, "\n")
+	for i, line := range lines {
+		// Keyword and arguments are separated by whitespace or "=".
+		fields := strings.FieldsFunc(line, func(r rune) bool {
+			return r == ' ' || r == '\t' || r == '='
+		})
+		if len(fields) < 2 || !strings.EqualFold(fields[0], "include") {
+			continue
+		}
+		for _, f := range fields[1:] {
+			includes = append(includes, strings.Trim(f, `"`))
+		}
+		lines[i] = ""
+	}
+	return strings.Join(lines, "\n"), includes
+}
+
+// expandInclude resolves an Include argument to the files it matches.
+func expandInclude(pattern, baseDir string) []string {
+	if strings.HasPrefix(pattern, "~/") {
+		pattern = filepath.Join(os.Getenv("HOME"), pattern[2:])
+	} else if !filepath.IsAbs(pattern) {
+		pattern = filepath.Join(baseDir, pattern)
+	}
+	// Glob returns matches in lexical order, which is the order OpenSSH uses.
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		log.Printf("[config] Bad Include pattern %q: %s", pattern, err)
+	}
+	return matches
+}
+
+// parseConfig parses the hosts in an SSH config (without Include lines).
+func parseConfig(path, body string) []*ConfigHost {
+	var hosts []*ConfigHost
+	cfg, err := ssh_config.Parse(strings.NewReader(body))
 	if err != nil {
 		log.Printf("[config/%s] Parse error: %s", path, err)
 		return hosts
